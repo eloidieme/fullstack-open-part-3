@@ -3,7 +3,7 @@ const app = express()
 
 app.use(express.json())
 
-persons = [
+let persons = [
     { 
       "id": 1,
       "name": "Arto Hellas", 
@@ -54,6 +54,25 @@ app.delete('/api/persons/:id', (request, response) => {
     persons = persons.filter(p => p.id !== id)
 
     response.status(204).end()
+})
+
+const generateId = (maxValue) => {
+    return Math.floor(Math.random() * maxValue)
+}
+
+app.post('/api/persons/', (request, response) => {
+    const body = request.body
+    const maxValue = 1e8
+
+    const person = {
+        name: body.name,
+        number: body.number,
+        id: generateId(maxValue)
+    }
+
+    persons = persons.concat(person)
+
+    response.json(person)
 })
 
 const PORT = 3001
