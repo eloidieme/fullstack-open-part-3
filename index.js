@@ -68,43 +68,38 @@ app.delete("/api/persons/:id", (request, response, next) => {
 });
 
 app.put("/api/persons/:id", (request, response, next) => {
-  console.log('here')
   const body = request.body;
-  
+
   const entry = {
     name: body.name,
     number: body.number,
   };
 
-  Entry.findByIdAndUpdate(request.params.id, entry, { new: true })
+  Entry.findByIdAndUpdate(request.params.id, entry, {
+    new: true,
+    runValidators: true,
+    context: "query",
+  })
     .then((updatedEntry) => {
       response.json(updatedEntry);
     })
     .catch((error) => next(error));
 });
 
-app.post("/api/persons/", (request, response) => {
+app.post("/api/persons/", (request, response, next) => {
   const body = request.body;
-
-  if (!body.name) {
-    return response.status(400).json({
-      error: "name is missing",
-    });
-  }
-  if (!body.number) {
-    return response.status(400).json({
-      error: "number is missing",
-    });
-  }
 
   const person = new Entry({
     name: body.name,
     number: body.number,
   });
 
-  person.save().then((returnedPerson) => {
-    response.json(returnedPerson);
-  });
+  person
+    .save()
+    .then((returnedPerson) => {
+      response.json(returnedPerson);
+    })
+    .catch((error) => next(error));
 });
 
 const unknownEndpoint = (request, response) => {
@@ -118,6 +113,8 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === "CastError") {
     response.status(400).send({ error: "id is malformed" });
+  } else if (error.name === "ValidationError") {
+    response.status(400).json({ error: error.message });
   }
 
   next(error);
